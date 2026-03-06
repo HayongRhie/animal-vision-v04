@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Animal Vision Explorer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <!-- Welcome / onboarding screen -->
+  <div class="welcomeScreen" id="welcomeScreen">
+    <div class="welcomeCard">
+      <div class="welcomeEyebrow">Interactive demonstration</div>
+      <h1>Animal Vision Explorer</h1>
+
+      <p class="welcomeLead">
+        This project uses your camera to simulate how different animals and human colour-vision conditions
+        might interpret the same scene.
+      </p>
+
+      <div class="welcomeGrid">
+        <div class="infoCard">
+          <div class="infoCardTitle">What this does</div>
+          <p>
+            The app shows a live camera view and applies different visual models. Some are based on real
+            biological ideas, while others are <b>conceptual educational visualisations</b>.
+          </p>
+        </div>
+
+        <div class="infoCard">
+          <div class="infoCardTitle">Important note</div>
+          <p>
+            Phones and laptops only capture standard visible-light RGB data. That means UV, thermal,
+            and polarisation modes here are <b>approximations</b>, not direct sensing.
+          </p>
+        </div>
+      </div>
+
+      <div class="stepsBox">
+        <div class="stepsTitle">Before you begin</div>
+        <ol>
+          <li>Use a browser that supports camera access.</li>
+          <li>When your browser asks for permission, click <b>Allow</b> for the camera.</li>
+          <li>If the camera does not appear, reload the page and allow permission.</li>
+          <li>For best results, point the camera at colourful, bright, or reflective objects.</li>
+        </ol>
+      </div>
+
+      <div class="welcomeGrid">
+        <div class="miniPanel">
+          <div class="miniPanelTitle">How to use it</div>
+          <ul>
+            <li>Choose a mode from the dropdown.</li>
+            <li>Use <b>Compare</b> to see normal human view beside the selected mode.</li>
+            <li>Move the <b>Split</b> slider to compare both views directly.</li>
+            <li>Use <b>Learn</b> or <b>Colour Guide</b> for explanations.</li>
+          </ul>
+        </div>
+
+        <div class="miniPanel">
+          <div class="miniPanelTitle">Best things to test</div>
+          <ul>
+            <li>Colourful books, clothes, packaging, or posters</li>
+            <li>Plants, flowers, and printed images</li>
+            <li>Shiny metal, phone screens, or reflective plastic</li>
+            <li>Your hand or face for conceptual contrast modes</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="welcomeActions">
+        <button class="primaryBtn" id="startBtn">Start Camera Experience</button>
+      </div>
+
+      <div class="welcomeFootnote">
+        If nothing happens after clicking start, check the camera permission icon in your browser address bar.
+      </div>
+    </div>
+  </div>
+
+  <!-- Main UI -->
+  <div class="appShell" id="appShell" aria-hidden="true">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbarLeft">
+        <button class="pill button subtlePill" id="homeBtn">🏠 Home</button>
+        <div class="pill modePill" id="modeTitle">Human (baseline)</div>
+        <button class="pill button subtlePill" id="helpBtn" type="button">❔ Help</button>
+        </div>
+
+      <div class="topbarRight">
+        <button class="pill button" id="colourBtn" type="button">🎨 Colour Guide</button>
+        <button class="pill button" id="learnBtn" type="button">ⓘ Learn This Mode</button>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status" id="status" style="display:none;"></div>
+
+    <!-- Thermal legend -->
+    <div class="legend" id="thermalLegend" style="display:none;">
+      <div class="legendTitle">Thermal-style overlay (concept only)</div>
+      <div class="bar thermal"></div>
+      <div class="legendRow">
+        <span>cooler</span><span>hotter</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls controlsCollapsed" id="controls">
+      <div class="panelHeader">
+        <div>
+          <div class="panelTitle">Controls</div>
+          <div class="panelSubtitle">Everything below is clickable and adjustable.</div>
+        </div>
+        <div class="panelHeaderButtons">
+          <button class="ghostBtn" id="resetBtn" type="button">Reset</button>
+          <button class="ghostBtn" id="toggleControlsBtn" type="button">Hide</button>
+        </div>
+      </div>
+
+      <div class="controlsBody" id="controlsBody">
+        <div class="sectionLabel">1. Choose a view</div>
+        <div class="row">
+          <label for="mode">
+            Mode
+            <span class="labelHint">Select the animal or colour-vision condition</span>
+          </label>
+          <select id="mode">
+            <optgroup label="Animal vision (and concepts)">
+              <option value="0">Human (baseline)</option>
+              <option value="1">Mammal (dichromat: dog/cat/horse concept)</option>
+              <option value="2">Bee (concept: UV inferred)</option>
+              <option value="3">Bird (tetrachromat concept)</option>
+              <option value="4">Dragonfly (compound eye + polarisation concept)</option>
+              <option value="5">Deep-sea fish (bioluminescence concept)</option>
+              <option value="6">Shark (low-light / monochrome concept)</option>
+              <option value="7">Snake (thermal concept)</option>
+              <option value="8">Mantis shrimp (concept)</option>
+            </optgroup>
+
+            <optgroup label="Human colour vision differences (concept)">
+              <option value="10">Deuteranopia</option>
+              <option value="11">Protanopia</option>
+              <option value="12">Tritanopia</option>
+              <option value="13">Deuteranomaly</option>
+              <option value="14">Protanomaly</option>
+              <option value="15">Achromatopsia (total colour blindness concept)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="sectionLabel">2. Adjust the effect</div>
+        <div class="row">
+          <label id="strengthLabel" for="strength">
+            Strength
+            <span class="labelHint">Controls how strongly the selected mode is applied</span>
+          </label>
+          <input type="range" id="strength" min="0" max="1" step="0.01" value="0.85" />
+        </div>
+
+        <div class="row">
+          <label id="uvLabel" for="uv">
+            UV / Overlay
+            <span class="labelHint">Used only in modes that support an extra overlay</span>
+          </label>
+          <input type="range" id="uv" min="0" max="1" step="0.01" value="0.75" />
+        </div>
+
+        <div class="sectionLabel">3. Compare with normal human view</div>
+        <div class="row inline">
+          <label for="compare">
+            Compare mode
+            <span class="labelHint">Shows normal view on one side and selected mode on the other</span>
+          </label>
+          <input type="checkbox" id="compare" checked />
+        </div>
+
+        <div class="row" id="splitRow">
+          <label for="split">
+            Split position
+            <span class="labelHint">Move the divider left or right</span>
+          </label>
+          <input type="range" id="split" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+
+        <div class="hintBox">
+          <div class="hintTitle">Quick note</div>
+          <p>
+            “Concept” modes are educational visualisations. They help explain the idea,
+            but they are not direct UV, thermal, or polarisation capture.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" style="display:none;">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="modalTitle" id="modalTitle">Info</div>
+        <button class="modalClose" id="modalClose" type="button">✕</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="main.js?v=3"></script>
+</body>
+</html>
