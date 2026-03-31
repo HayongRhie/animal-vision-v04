@@ -1258,10 +1258,19 @@ async function initCamera() {
   try {
     setStatus("<b>Step 1:</b> requesting camera permission. Please click <b>Allow</b> in your browser.", true);
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false
-    });
+    let stream;
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false
+      });
+    } catch (err) {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      });
+    }
 
     video.srcObject = stream;
     video.muted = true;
